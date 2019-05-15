@@ -40,6 +40,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 
+import io.undertow.UndertowOptions;
 import org.xnio.ChannelListener;
 import org.xnio.ChannelListeners;
 import org.xnio.FutureResult;
@@ -251,6 +252,12 @@ public class UndertowXnioSsl extends XnioSsl {
             }
             engine.setEnabledProtocols(finalList.toArray(new String[finalList.size()]));
         }
+        final String endpointIdentificationAlgorithm = optionMap.get(UndertowOptions.ENDPOINT_IDENTIFICATION_ALGORITHM, null);
+        if (endpointIdentificationAlgorithm != null) {
+            SSLParameters sslParameters = engine.getSSLParameters();
+            sslParameters.setEndpointIdentificationAlgorithm(endpointIdentificationAlgorithm);
+            engine.setSSLParameters(sslParameters);
+        }
         return engine;
     }
 
@@ -389,6 +396,12 @@ public class UndertowXnioSsl extends XnioSsl {
                 SSLEngine sslEngine = JsseSslUtils.createSSLEngine(sslContext, optionMap, destination);
                 SSLParameters params = sslEngine.getSSLParameters();
                 params.setServerNames(Collections.singletonList(new SNIHostName(destination.getHostString())));
+
+                final String endpointIdentificationAlgorithm = optionMap.get(UndertowOptions.ENDPOINT_IDENTIFICATION_ALGORITHM, null);
+                if (endpointIdentificationAlgorithm != null) {
+                    params.setEndpointIdentificationAlgorithm(endpointIdentificationAlgorithm);
+                }
+
                 sslEngine.setSSLParameters(params);
 
                 final SslConnection wrappedConnection = new UndertowSslConnection(connection, sslEngine, bufferPool);
